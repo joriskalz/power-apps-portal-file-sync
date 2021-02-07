@@ -64,6 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helper.cs" />
+    <Compile Include="Model\ContentSnippet.cs" />
+    <Compile Include="Model\WebTemplate.cs" />
     <Compile Include="Model\WebFile.cs" />
     <Compile Include="Model\WebPage.cs" />
     <Compile Include="Model\WebSite.cs" />

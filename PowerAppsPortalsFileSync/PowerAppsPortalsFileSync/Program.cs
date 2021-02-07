@@ -153,7 +153,6 @@ namespace PowerAppsPortalsFileSync
                     }
                 }
 
-
                 Console.WriteLine("-- Start Loading WebPages --");
                 var webpages = (svc.Get("adx_webpages?" +
                 $"$select=adx_webpageid,adx_name,adx_partialurl,adx_isroot,_adx_webpagelanguageid_value,_adx_parentpageid_value,_adx_websiteid_value,adx_copy,adx_customcss,adx_customjavascript&$filter=(adx_websiteid/adx_websiteid eq {website.WebSiteId})&$orderby=adx_isroot desc,adx_name asc")["value"] as JArray).ToObject<WebPage[]>();
@@ -268,9 +267,125 @@ namespace PowerAppsPortalsFileSync
                         }
                     }
                 }
+
+                Console.WriteLine("-- Start Loading WebTemplates --");
+                var webTemplates = (svc.Get("adx_webtemplates?" +
+                $"$select=adx_webtemplateid,adx_name,adx_source&$filter=(adx_websiteid/adx_websiteid eq {website.WebSiteId})&$orderby=adx_name asc")["value"] as JArray).ToObject<WebTemplate[]>();
+
+                // Web Templates
+                var dirInfoWebTemplates = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebTemplates"));
+                foreach (var template in webTemplates)
+                {
+                    // new path for website and the language
+                    var validName = Helper.ReplaceInvalidChars(template.Name);
+                    var currentPath = Helper.CreateFolder(dirInfoWebTemplates.FullName, validName);
+
+                    var pathContent = Path.Combine(currentPath, $"{validName}-{template.WebTemplateId}.html");
+
+                    if (import)
+                    {
+                        try
+                        {
+                            var content = string.Empty;
+
+                            if (File.Exists(pathContent))
+                            {
+                                content = File.ReadAllText(pathContent);
+                                if (template.Source?.Length > 0)
+                                    if (template.Source != content)
+                                    {
+                                        Console.WriteLine("Changes detected in content: " + template.Name);
+
+                                        // Update a webtemplate
+                                        JObject webtemplate = new JObject
+                                            {
+                                                { "adx_source", content }
+                                            };
+
+                                        var webpageuri = new Uri($"{svc.BaseAddress}adx_webtemplates({template.WebTemplateId})");
+                                        svc.Patch(webpageuri, webtemplate);
+                                    }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        if (template.Source?.Length > 0)
+                        {
+                            File.WriteAllText(pathContent, template.Source);
+                        }
+                    }
+                }
+
+                Console.WriteLine("-- Start Loading ContentSnippets --");
+                var contentSnippets = (svc.Get("adx_contentsnippets?" +
+                $"$select=adx_name,_adx_contentsnippetlanguageid_value,adx_contentsnippetid,adx_value&$filter=(_adx_websiteid_value eq {website.WebSiteId})&$orderby=adx_name asc")["value"] as JArray).ToObject<ContentSnippet[]>();
+
+                // ContentSnippets
+                var dirInfoContentSnippets = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "ContentSnippets"));
+                foreach (var snippet in contentSnippets)
+                {
+
+                    // new path for website and the language
+                    var validName = Helper.ReplaceInvalidChars(snippet.Name);
+                    var currentPath = Helper.CreateFolder(dirInfoContentSnippets.FullName, validName);
+
+                    try
+                    {
+                        var portalLanguage = portalLanguages.SingleOrDefault(s => s.PortalLanguageId == languages.SingleOrDefault(t => t.WebSiteLanguageId == snippet.ContentSnippetLanguageId).PortalLanguageId);
+                        currentPath = Helper.CreateFolder(currentPath, portalLanguage.LanguageCode);
+                    }
+                    catch (Exception)
+                    {
+                        //Console.WriteLine("Error Detected: " + page.Name);
+                    }
+
+                    var pathContent = Path.Combine(currentPath, $"{validName}-{snippet.ContentSnippetId}.html");
+
+                    if (import)
+                    {
+                        try
+                        {
+                            var content = string.Empty;
+
+                            if (File.Exists(pathContent))
+                            {
+                                content = File.ReadAllText(pathContent);
+                                if (snippet.Value?.Length > 0)
+                                    if (snippet.Value != content)
+                                    {
+                                        Console.WriteLine("Changes detected in content: " + snippet.Name);
+
+                                        //Update a snippet
+                                        JObject snippetObj = new JObject
+                                            {
+                                                { "adx_value", content }
+                                            };
+
+                                        var snippeturi = new Uri($"{svc.BaseAddress}adx_contentsnippets({snippet.ContentSnippetId})");
+                                        svc.Patch(snippeturi, snippetObj);
+                                    }
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        if (snippet.Value?.Length > 0)
+                        {
+                            File.WriteAllText(pathContent, snippet.Value);
+                        }
+                    }
+                }
             }
         }
-
-
     }
 }
