@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="Helper.cs" />
     <Compile Include="Model\WebFile.cs" />
+    <Compile Include="Model\WebPage.cs" />
     <Compile Include="Model\WebSite.cs" />
     <Compile Include="Model\PortalLanguage.cs" />
     <Compile Include="Model\WebSiteLanguage.cs" />

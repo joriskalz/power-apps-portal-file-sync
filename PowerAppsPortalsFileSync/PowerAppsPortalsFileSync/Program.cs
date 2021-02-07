@@ -117,6 +117,33 @@ namespace PowerAppsPortalsFileSync
                                 {
                                     File.WriteAllBytes(webFilePath, Convert.FromBase64String(webFile.DocumentBody));
                                 }
+                                else
+                                {
+                                    if (File.Exists(webFilePath))
+                                    {
+                                        var webFileDisk = File.ReadAllBytes(webFilePath);
+                                        if (webFileDisk?.Length > 0)
+                                        {
+                                            var webFileOnline = Convert.FromBase64String(webFile.DocumentBody);
+
+                                            if (!Helper.ByteArrayCompare(webFileOnline, webFileDisk))
+                                            {
+                                                Console.WriteLine("Changes detected in WebFile: " + webFile.Filename);
+
+                                                // Update a webfile aka annotations
+                                                JObject webfile = new JObject
+                                                {
+                                                    { "documentbody", Convert.ToBase64String(webFileDisk)  },
+                                                    { "mimetype", webFile.MimeType  }
+                                                };
+
+                                                var webfileuri = new Uri($"{svc.BaseAddress}annotations({webFile.AnnotationId })");
+                                                svc.Patch(webfileuri, webfile);
+                                            }
+                                        }
+                                    }
+
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -126,6 +153,121 @@ namespace PowerAppsPortalsFileSync
                     }
                 }
 
+
+                Console.WriteLine("-- Start Loading WebPages --");
+                var webpages = (svc.Get("adx_webpages?" +
+                $"$select=adx_webpageid,adx_name,adx_partialurl,adx_isroot,_adx_webpagelanguageid_value,_adx_parentpageid_value,_adx_websiteid_value,adx_copy,adx_customcss,adx_customjavascript&$filter=(adx_websiteid/adx_websiteid ne null) and and (_adx_websiteid_value eq {website.WebSiteId}) &$orderby=adx_isroot desc,adx_name asc")["value"] as JArray).ToObject<WebPage[]>();
+        
+                // Webpages
+                var dirInfoWebPages = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebPages"));
+                foreach (var page in webpages)
+                {
+                    // new path for website and the language
+                    var validName = Helper.ReplaceInvalidChars(page.Name);
+                    var currentPath = Helper.CreateFolder(dirInfoWebPages.FullName, validName);
+
+                    try
+                    {
+                        var portalLanguage = portalLanguages.SingleOrDefault(s => s.PortalLanguageId == languages.SingleOrDefault(t => t.WebSiteLanguageId == page.WebPageLanguageId).PortalLanguageId);
+                        currentPath = Helper.CreateFolder(currentPath, portalLanguage.LanguageCode);
+                    }
+                    catch (Exception)
+                    {
+                        //Console.WriteLine("Error Detected: " + page.Name);
+                        // Probalbly no language
+                    }
+
+                    var pathContent = Path.Combine(currentPath, $"{validName}-Content-{page.WebPageId}.html");
+                    var pathCss = Path.Combine(currentPath, $"{validName}-CustomCss-{page.WebPageId}.css");
+                    var pathJavascript = Path.Combine(currentPath, $"{validName}-CustomJavascript-{page.WebPageId}.js");
+
+                    if (import)
+                    {
+                        try
+                        {
+                            var content = string.Empty;
+                            var css = string.Empty;
+                            var javascript = string.Empty;
+
+                            if (File.Exists(pathContent))
+                            {
+                                content = File.ReadAllText(pathContent);
+                                if (page.Copy?.Length > 0)
+                                    if (page.Copy != content)
+                                    {
+                                        Console.WriteLine("Changes detected in content: " + page.Name);
+
+                                        //Update a contact
+                                        JObject webpage = new JObject
+                                            {
+                                                { "adx_copy", content }
+                                            };
+
+                                        var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
+                                        svc.Patch(webpageuri, webpage);
+                                    }
+                            }
+
+                            if (File.Exists(pathCss))
+                            {
+                                css = File.ReadAllText(pathCss);
+                                if (page.CustomCss?.Length > 0)
+                                    if (page.CustomCss != css)
+                                    {
+                                        Console.WriteLine("Changes detected in css: " + page.Name);
+
+                                        //Update a Css
+                                        JObject webpage = new JObject
+                                            {
+                                                { "adx_customcss", css }
+                                            };
+
+                                        var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
+                                        svc.Patch(webpageuri, webpage);
+                                    }
+                            }
+                            if (File.Exists(pathJavascript))
+                            {
+                                javascript = File.ReadAllText(pathJavascript);
+                                if (page.CustomJavascript?.Length > 0)
+                                    if (page.CustomJavascript != javascript)
+                                    {
+                                        Console.WriteLine("Changes detected in javascripts: " + page.Name);
+
+                                        //Update a Javascript
+                                        JObject webpage = new JObject
+                                            {
+                                                { "adx_customjavascript", javascript }
+                                            };
+
+                                        var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
+                                        svc.Patch(webpageuri, webpage);
+                                    }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        if (page.Copy?.Length > 0)
+                        {
+                            File.WriteAllText(pathContent, page.Copy);
+                        }
+
+                        if (page.CustomCss?.Length > 0)
+                        {
+                            File.WriteAllText(pathCss, page.CustomCss);
+                        }
+
+                        if (page.CustomJavascript?.Length > 0)
+                        {
+                            File.WriteAllText(pathJavascript, page.CustomJavascript);
+                        }
+                    }
+                }
             }
         }
 
