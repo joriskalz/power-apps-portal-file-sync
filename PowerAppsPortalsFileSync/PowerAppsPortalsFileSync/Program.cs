@@ -18,7 +18,7 @@ namespace PowerAppsPortalsFileSync
             Parser.Default.ParseArguments<Options>(args)
                .WithParsed<Options>(o =>
                {
-                   connectionString = $"Url={o.Url};Authority=null;UserPrincipalName={o.Email};Password={o.Password};CallerObjectId=null;Version=9.1;MaxRetries=3;TimeoutInSeconds=180;";
+                   connectionString = $"Url={o.Url};Authority=null;UserPrincipalName={o.Email};Password={o.Password};ClientId=12f81219-12ee-4a9e-12ae-a2591f43381d;RedirectUrl=app://12f81219-12ee-4a9e-12ae-a2591f43381d;CallerObjectId=null;Version=9.1;MaxRetries=3;TimeoutInSeconds=180;";
                    config = new ServiceConfig(connectionString);
 
                    try
@@ -30,6 +30,8 @@ namespace PowerAppsPortalsFileSync
                        throw;
                    }
                });
+
+            Console.ReadLine();
 
         }
     }
