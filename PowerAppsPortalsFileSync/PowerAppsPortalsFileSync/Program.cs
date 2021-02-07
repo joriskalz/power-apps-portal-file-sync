@@ -156,7 +156,7 @@ namespace PowerAppsPortalsFileSync
 
                 Console.WriteLine("-- Start Loading WebPages --");
                 var webpages = (svc.Get("adx_webpages?" +
-                $"$select=adx_webpageid,adx_name,adx_partialurl,adx_isroot,_adx_webpagelanguageid_value,_adx_parentpageid_value,_adx_websiteid_value,adx_copy,adx_customcss,adx_customjavascript&$filter=(adx_websiteid/adx_websiteid ne null) and and (_adx_websiteid_value eq {website.WebSiteId}) &$orderby=adx_isroot desc,adx_name asc")["value"] as JArray).ToObject<WebPage[]>();
+                $"$select=adx_webpageid,adx_name,adx_partialurl,adx_isroot,_adx_webpagelanguageid_value,_adx_parentpageid_value,_adx_websiteid_value,adx_copy,adx_customcss,adx_customjavascript&$filter=(adx_websiteid/adx_websiteid eq {website.WebSiteId})&$orderby=adx_isroot desc,adx_name asc")["value"] as JArray).ToObject<WebPage[]>();
         
                 // Webpages
                 var dirInfoWebPages = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebPages"));
