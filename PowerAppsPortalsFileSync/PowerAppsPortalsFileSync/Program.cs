@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommandLine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,19 @@ namespace PowerAppsPortalsFileSync
     {
         static void Main(string[] args)
         {
+            Parser.Default.ParseArguments<Options>(args)
+               .WithParsed<Options>(o =>
+               {
+                   try
+                   {
+                       
+                   }
+                   catch (Exception)
+                   {
+                       throw;
+                   }
+               });
+
         }
     }
 }
