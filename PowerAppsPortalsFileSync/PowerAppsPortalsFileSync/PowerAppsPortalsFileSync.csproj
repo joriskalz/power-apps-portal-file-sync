@@ -49,5 +49,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CDSWebApiService\CDSWebApiService.csproj">
+      <Project>{e8c225d3-f15a-417c-aa4a-9114c0f2bdf4}</Project>
+      <Name>CDSWebApiService</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
