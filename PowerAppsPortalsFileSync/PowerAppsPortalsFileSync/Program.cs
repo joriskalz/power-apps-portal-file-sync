@@ -51,16 +51,20 @@ namespace PowerAppsPortalsFileSync
                         }
                     };
 
+                // Loading Languages
                 Console.WriteLine("-- Start Loading Portal Languages --");
-                // adx_portallanguages?$select=adx_portallanguageid,adx_languagecode&$top=50
                 var portalLanguages = (svc.Get("adx_portallanguages?" +
                     "$select=adx_portallanguageid,adx_languagecode",
                         formattedValueHeaders)["value"] as JArray).ToObject<PortalLanguage[]>();
 
-                foreach (var item in portalLanguages)
-                {
-                    Console.WriteLine(item.LanguageCode);
-                }
+                // Loading WebsiteLanguages
+                Console.WriteLine("-- Start Loading WebSiteLanguages --");
+                var languages = (svc.Get("adx_websitelanguages?" +
+                "$select=adx_websitelanguageid,_adx_websiteid_value,_adx_portallanguageid_value,adx_name",
+                    formattedValueHeaders)["value"] as JArray).ToObject<WebSiteLanguage[]>();
+
+
+
             }
         }
     }
