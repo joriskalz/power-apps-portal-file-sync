@@ -4,6 +4,7 @@ using PowerApps.Samples;
 using PowerAppsPortalsFileSync.Model;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -81,7 +82,31 @@ namespace PowerAppsPortalsFileSync
             {
                 Console.WriteLine($"-- Start Creating Folder Structure for {website.Name} --");
 
+                // Folder for WebSite
+                var newWebSiteFolder = createFolder(baseFolder, replaceInvalidChars(website.Name));
             }
+        }
+
+        private static string createFolder(string path, string folder)
+        {
+            path = Path.Combine(path.Trim(), folder.Trim());
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            return path;
+        }
+
+        // https://stackoverflow.com/a/23182807
+        private static string replaceInvalidChars(string filename)
+        {
+            if (string.IsNullOrEmpty(filename))
+            {
+                throw new ArgumentException($"'{nameof(filename)}' cannot be null or empty", nameof(filename));
+            }
+
+            return string.Join("_", filename.Split(Path.GetInvalidFileNameChars())).Trim();
         }
     }
 }
