@@ -28,7 +28,6 @@ namespace PowerAppsPortalsFileSync
                    try
                    {
                        processPortal(config, o.Folder, o.Save);
-
                    }
                    catch (Exception ex)
                    {
