@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Model\WebSite.cs" />
     <Compile Include="Model\PortalLanguage.cs" />
     <Compile Include="Model\WebSiteLanguage.cs" />
     <Compile Include="Options.cs" />

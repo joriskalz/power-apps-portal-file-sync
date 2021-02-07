@@ -63,7 +63,23 @@ namespace PowerAppsPortalsFileSync
                 "$select=adx_websitelanguageid,_adx_websiteid_value,_adx_portallanguageid_value,adx_name",
                     formattedValueHeaders)["value"] as JArray).ToObject<WebSiteLanguage[]>();
 
+                // Loading WebSites
+                Console.WriteLine("-- Start Loading WebSites --");
+                var websites = (svc.Get("adx_websites?" +
+                "$select=adx_websiteid,adx_name",
+                    formattedValueHeaders)["value"] as JArray).ToObject<WebSite[]>();
 
+                processWebsites(baseFolder, websites, portalLanguages, languages, import, svc);
+
+            }
+        }
+
+        private static void processWebsites(string baseFolder, WebSite[] websites, PortalLanguage[] portalLanguages, WebSiteLanguage[] languages, bool import, CDSWebApiService svc)
+        {
+            // Start Creating Folder Structure
+            foreach (var website in websites)
+            {
+                Console.WriteLine($"-- Start Creating Folder Structure for {website.Name} --");
 
             }
         }
