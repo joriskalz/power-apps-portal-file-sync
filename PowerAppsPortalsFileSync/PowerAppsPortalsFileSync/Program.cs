@@ -83,30 +83,52 @@ namespace PowerAppsPortalsFileSync
                 Console.WriteLine($"-- Start Creating Folder Structure for {website.Name} --");
 
                 // Folder for WebSite
-                var newWebSiteFolder = createFolder(baseFolder, replaceInvalidChars(website.Name));
+                var newWebSiteFolder = Helper.CreateFolder(baseFolder, Helper.ReplaceInvalidChars(website.Name));
+
+                // Load Web Files for Website
+                Console.WriteLine("-- Start Loading WebFiles --");
+                var webfiles = (svc.Get("annotations?" +
+                $"$select=annotationid,filename,_objectid_value,modifiedon,documentbody,mimetype,isdocument&$expand=objectid_adx_webfile($select=_adx_websiteid_value,adx_name)&$filter=(documentbody ne null and (endswith(filename, 'js') or endswith(filename, 'css'))) and objecttypecode eq 'adx_webfile' and isdocument eq true and (objectid_adx_webfile/_adx_websiteid_value eq {website.WebSiteId})")["value"] as JArray).ToObject<WebFile[]>(); 
+
+                // WebFiles
+                var dirInfoWebFiles = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebFiles"));
+                foreach (var webFile in webfiles)
+                {
+                    if (webFile.DocumentBody?.Length > 0)
+                    {
+                        try
+                        {
+                            //https://stackoverflow.com/questions/21733756/best-way-to-split-string-by-last-occurrence-of-character
+                            string s = webFile.Filename;
+                            int idx = s.LastIndexOf('.');
+
+                            var fileName1Part = string.Empty;
+                            var fileName2Part = string.Empty;
+
+
+                            if (idx != -1)
+                            {
+                                fileName1Part = s.Substring(0, idx);
+                                fileName2Part = s.Substring(idx + 1);
+
+
+                                var webFilePath = Path.Combine(dirInfoWebFiles.FullName, $"{fileName1Part}-{webFile.AnnotationId}.{fileName2Part}");
+                                if (!import)
+                                {
+                                    File.WriteAllBytes(webFilePath, Convert.FromBase64String(webFile.DocumentBody));
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error WebFile: {webFile.Filename} Error: {ex.Message}");
+                        }
+                    }
+                }
+
             }
         }
 
-        private static string createFolder(string path, string folder)
-        {
-            path = Path.Combine(path.Trim(), folder.Trim());
 
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            return path;
-        }
-
-        // https://stackoverflow.com/a/23182807
-        private static string replaceInvalidChars(string filename)
-        {
-            if (string.IsNullOrEmpty(filename))
-            {
-                throw new ArgumentException($"'{nameof(filename)}' cannot be null or empty", nameof(filename));
-            }
-
-            return string.Join("_", filename.Split(Path.GetInvalidFileNameChars())).Trim();
-        }
     }
 }
