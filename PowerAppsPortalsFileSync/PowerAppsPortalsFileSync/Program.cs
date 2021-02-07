@@ -35,9 +35,6 @@ namespace PowerAppsPortalsFileSync
                        Console.WriteLine($"Error: {ex.Message}");
                    }
                });
-
-            Console.ReadLine();
-
         }
 
         private static void processPortal(ServiceConfig config, string baseFolder, bool import = false)
@@ -77,6 +74,7 @@ namespace PowerAppsPortalsFileSync
 
         private static void processWebsites(string baseFolder, WebSite[] websites, PortalLanguage[] portalLanguages, WebSiteLanguage[] languages, bool import, CDSWebApiService svc)
         {
+            var countUpdatedFiles = 0;
             // Start Creating Folder Structure
             foreach (var website in websites)
             {
@@ -139,6 +137,7 @@ namespace PowerAppsPortalsFileSync
 
                                                 var webfileuri = new Uri($"{svc.BaseAddress}annotations({webFile.AnnotationId })");
                                                 svc.Patch(webfileuri, webfile);
+                                                countUpdatedFiles++;
                                             }
                                         }
                                     }
@@ -204,6 +203,7 @@ namespace PowerAppsPortalsFileSync
 
                                         var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
                                         svc.Patch(webpageuri, webpage);
+                                        countUpdatedFiles++;
                                     }
                             }
 
@@ -223,6 +223,7 @@ namespace PowerAppsPortalsFileSync
 
                                         var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
                                         svc.Patch(webpageuri, webpage);
+                                        countUpdatedFiles++;
                                     }
                             }
                             if (File.Exists(pathJavascript))
@@ -241,6 +242,7 @@ namespace PowerAppsPortalsFileSync
 
                                         var webpageuri = new Uri($"{svc.BaseAddress}adx_webpages({page.WebPageId})");
                                         svc.Patch(webpageuri, webpage);
+                                        countUpdatedFiles++;
                                     }
                             }
                         }
@@ -304,6 +306,7 @@ namespace PowerAppsPortalsFileSync
 
                                         var webpageuri = new Uri($"{svc.BaseAddress}adx_webtemplates({template.WebTemplateId})");
                                         svc.Patch(webpageuri, webtemplate);
+                                        countUpdatedFiles++;
                                     }
                             }
                         }
@@ -368,6 +371,7 @@ namespace PowerAppsPortalsFileSync
 
                                         var snippeturi = new Uri($"{svc.BaseAddress}adx_contentsnippets({snippet.ContentSnippetId})");
                                         svc.Patch(snippeturi, snippetObj);
+                                        countUpdatedFiles++;
                                     }
                             }
 
@@ -386,6 +390,16 @@ namespace PowerAppsPortalsFileSync
                     }
                 }
             }
+
+            if (import)
+            {
+                Console.WriteLine($"-- Total Files Updated: {countUpdatedFiles} --");
+            }
+            else
+            {
+                Console.WriteLine($"-- Finished Downloading Files --");
+            }
+
         }
     }
 }
