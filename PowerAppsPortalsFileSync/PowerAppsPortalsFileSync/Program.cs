@@ -41,34 +41,34 @@ namespace PowerAppsPortalsFileSync
             using (CDSWebApiService svc = new CDSWebApiService(config))
             {
 
-                // Header required to include formatted values
-                var formattedValueHeaders = new Dictionary<string, List<string>> {
+
+                // Loading Languages
+                Console.WriteLine("-- Start Loading Portal Languages --");
+                var portalLanguages = GetPortalData<PortalLanguage>(svc, "adx_portallanguages?$select=adx_portallanguageid,adx_languagecode");
+
+                // Loading WebsiteLanguages
+                Console.WriteLine("-- Start Loading WebSiteLanguages --");
+                var languages = GetPortalData<WebSiteLanguage>(svc, "adx_websitelanguages?$select=adx_websitelanguageid,_adx_websiteid_value,_adx_portallanguageid_value,adx_name");
+
+                // Loading WebSites
+                Console.WriteLine("-- Start Loading WebSites --");
+                var websites = GetPortalData<WebSite>(svc, "adx_websites?$select=adx_websiteid,adx_name");
+
+                processWebsites(baseFolder, websites, portalLanguages, languages, import, svc);
+
+            }
+        }
+
+        private static T[] GetPortalData<T>(CDSWebApiService svc, string apiCommand)
+        {
+            // Header required to include formatted values
+            var formattedValueHeaders = new Dictionary<string, List<string>> {
                         { "Prefer", new List<string>
                             { "odata.include-annotations=\"OData.Community.Display.V1.FormattedValue\"" }
                         }
                     };
 
-                // Loading Languages
-                Console.WriteLine("-- Start Loading Portal Languages --");
-                var portalLanguages = (svc.Get("adx_portallanguages?" +
-                    "$select=adx_portallanguageid,adx_languagecode",
-                        formattedValueHeaders)["value"] as JArray).ToObject<PortalLanguage[]>();
-
-                // Loading WebsiteLanguages
-                Console.WriteLine("-- Start Loading WebSiteLanguages --");
-                var languages = (svc.Get("adx_websitelanguages?" +
-                "$select=adx_websitelanguageid,_adx_websiteid_value,_adx_portallanguageid_value,adx_name",
-                    formattedValueHeaders)["value"] as JArray).ToObject<WebSiteLanguage[]>();
-
-                // Loading WebSites
-                Console.WriteLine("-- Start Loading WebSites --");
-                var websites = (svc.Get("adx_websites?" +
-                "$select=adx_websiteid,adx_name",
-                    formattedValueHeaders)["value"] as JArray).ToObject<WebSite[]>();
-
-                processWebsites(baseFolder, websites, portalLanguages, languages, import, svc);
-
-            }
+            return (svc.Get(apiCommand, formattedValueHeaders)["value"] as JArray).ToObject<T[]>();
         }
 
         private static void processWebsites(string baseFolder, WebSite[] websites, PortalLanguage[] portalLanguages, WebSiteLanguage[] languages, bool import, CDSWebApiService svc)
@@ -84,8 +84,7 @@ namespace PowerAppsPortalsFileSync
 
                 // Load Web Files for Website
                 Console.WriteLine("-- Start Loading WebFiles --");
-                var webfiles = (svc.Get("annotations?" +
-                $"$select=annotationid,filename,_objectid_value,modifiedon,documentbody,mimetype,isdocument&$expand=objectid_adx_webfile($select=_adx_websiteid_value,adx_name)&$filter=(documentbody ne null and (endswith(filename, 'js') or endswith(filename, 'css'))) and objecttypecode eq 'adx_webfile' and isdocument eq true and (objectid_adx_webfile/_adx_websiteid_value eq {website.WebSiteId})")["value"] as JArray).ToObject<WebFile[]>(); 
+                var webfiles = GetPortalData<WebFile>(svc, $"annotations?$select=annotationid,filename,_objectid_value,modifiedon,documentbody,mimetype,isdocument&$expand=objectid_adx_webfile($select=_adx_websiteid_value,adx_name)&$filter=(documentbody ne null and (endswith(filename, 'js') or endswith(filename, 'css'))) and objecttypecode eq 'adx_webfile' and isdocument eq true and (objectid_adx_webfile/_adx_websiteid_value eq {website.WebSiteId})");
 
                 // WebFiles
                 var dirInfoWebFiles = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebFiles"));
@@ -270,8 +269,7 @@ namespace PowerAppsPortalsFileSync
                 }
 
                 Console.WriteLine("-- Start Loading WebTemplates --");
-                var webTemplates = (svc.Get("adx_webtemplates?" +
-                $"$select=adx_webtemplateid,adx_name,adx_source&$filter=(adx_websiteid/adx_websiteid eq {website.WebSiteId})&$orderby=adx_name asc")["value"] as JArray).ToObject<WebTemplate[]>();
+                var webTemplates = GetPortalData<WebTemplate>(svc, $"adx_webtemplates?$select=adx_webtemplateid,adx_name,adx_source&$filter=(adx_websiteid/adx_websiteid eq {website.WebSiteId})&$orderby=adx_name asc");
 
                 // Web Templates
                 var dirInfoWebTemplates = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "WebTemplates"));
@@ -324,8 +322,7 @@ namespace PowerAppsPortalsFileSync
                 }
 
                 Console.WriteLine("-- Start Loading ContentSnippets --");
-                var contentSnippets = (svc.Get("adx_contentsnippets?" +
-                $"$select=adx_name,_adx_contentsnippetlanguageid_value,adx_contentsnippetid,adx_value&$filter=(_adx_websiteid_value eq {website.WebSiteId})&$orderby=adx_name asc")["value"] as JArray).ToObject<ContentSnippet[]>();
+                var contentSnippets = GetPortalData<ContentSnippet>(svc, $"adx_contentsnippets?$select=adx_name,_adx_contentsnippetlanguageid_value,adx_contentsnippetid,adx_value&$filter=(_adx_websiteid_value eq {website.WebSiteId})&$orderby=adx_name asc");
 
                 // ContentSnippets
                 var dirInfoContentSnippets = Directory.CreateDirectory(Path.Combine(Path.Combine(baseFolder, newWebSiteFolder), "ContentSnippets"));
